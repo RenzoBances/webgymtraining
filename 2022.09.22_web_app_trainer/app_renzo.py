@@ -94,45 +94,73 @@ st.sidebar.markdown('---')
 app_mode = st.sidebar.selectbox('Choose your training:',
     ['(home)','Glute Bridge','Abs', 'Lunges', 'Push Up', 'Squats']
 )
-
+flgcamera=True
 if app_mode =='(home)':
     a=0
-elif app_mode =='Glute Bridge':
-    st.markdown('### __ABS__')
+elif app_mode =='Squats':
+    st.markdown('### CORE Basic Squats')
     st.markdown("<hr/>", unsafe_allow_html=True)
-
+    st.markdown('## Are you ready?')
     webcam = st.checkbox('Start Webcam')
-    st.markdown("Camera status: "+str(webcam))
 
     trainer, user = st.columns(2)
 
     with trainer:        
-        st.markdown("TRAINER", unsafe_allow_html=True)
-        experto = randrange(3)+1
-
-        video_trainer_file="videos_trainer/Glute Bridges/Glute Bridges"+str(experto)+".mp4"
-        coord_video = pd.read_csv("videos_trainer/Glute Bridges/Puntos_Glute_Brigdes"+str(experto)+".csv")
-        ruta_costos = pd.read_csv("videos_trainer/Glute Bridges/Costos_Glute Bridge_promedio.csv")
-
-        # st.table(coord_video)
-
+        st.markdown("Expert", unsafe_allow_html=True)
+        video_trainer_file="videos_experto/squats.mp4"
         st.video(video_trainer_file, format="video/mp4", start_time=0)
-        # st.table(ruta_costos)
-        
-
     with user:
         st.markdown("YOU", unsafe_allow_html=True)
         if webcam:
-            Exercises.Squats.start(2,2)
-    st.markdown("<hr/>", unsafe_allow_html=True)
+            Exercises.Squats.start(1,5)
+        else: 
+            cap = cv2.VideoCapture(0)
+            cap.release()   
+            cv2.destroyAllWindows()
 
 elif app_mode =='Abs':
-    a=0
+    st.markdown('### CORE Basic Abs')
+    st.markdown("<hr/>", unsafe_allow_html=True)
+    st.markdown('## Are you ready?')
+    webcam = st.checkbox('Start Webcam')
+
+    trainer, user = st.columns(2)
+
+    with trainer:        
+        st.markdown("Expert", unsafe_allow_html=True)
+        video_trainer_file="videos_experto/crunches.mp4"
+        st.video(video_trainer_file, format="video/mp4", start_time=0)
+    with user:
+        st.markdown("YOU", unsafe_allow_html=True)
+        if webcam:
+            Exercises.Crunches.start(1,5)
+        else: 
+            cap = cv2.VideoCapture(0)
+            cap.release()   
+            cv2.destroyAllWindows()
 elif app_mode =='Lunges':
     a=0
 elif app_mode =='Push Up':
-    a=0
-elif app_mode =='Squats':
+    st.markdown('### Tronco Superior Basic Push Up')
+    st.markdown("<hr/>", unsafe_allow_html=True)
+    st.markdown('## Are you ready?')
+    webcam = st.checkbox('Start Webcam')
+
+    trainer, user = st.columns(2)
+
+    with trainer:        
+        st.markdown("Expert", unsafe_allow_html=True)
+        video_trainer_file="videos_experto/pushup.mp4"
+        st.video(video_trainer_file, format="video/mp4", start_time=0)
+    with user:
+        st.markdown("YOU", unsafe_allow_html=True)
+        if webcam:
+            Exercises.Extensions.start(1,5)
+        else: 
+            cap = cv2.VideoCapture(0)
+            cap.release()   
+            cv2.destroyAllWindows()
+elif app_mode =='Glute Bridge':
     a=0
 else:
     a=0
