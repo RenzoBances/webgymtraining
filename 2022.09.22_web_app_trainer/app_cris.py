@@ -100,12 +100,15 @@ elif app_mode =='Glute Bridge':
 
     with trainer:        
         st.markdown("TRAINER", unsafe_allow_html=True)
-        experto = randrange(3)+1
-
+        #experto = randrange(3)+1
+        experto = 4
         video_trainer_file="videos_trainer/Glute Bridges/Glute Bridges"+str(experto)+".mp4"
-        df_experto = pd.read_csv("videos_trainer/Glute Bridges/Puntos_Glute_Brigdes"+str(experto)+".csv")
+        
+        df_experto = pd.read_csv("videos_trainer/Glute Bridges/Puntos_Glute_Bridges"+str(experto)+".csv")
+        #df_experto = pd.read_csv("videos_trainer/Glute Bridges/Puntos_manu.csv")
         del df_experto['segundo']
-        df_costos = pd.read_csv("videos_trainer/Glute Bridges/Costos_Glute Bridge_promedio.csv")
+        df_costos = pd.read_csv("videos_trainer/Glute Bridges/Costos_Glute Bridge_promedio__.csv")
+        #df_costos = pd.read_csv("videos_trainer/Glute Bridges/costo_promedio_manu.csv")
 
         #st.table(df_experto)
 
@@ -116,6 +119,7 @@ elif app_mode =='Glute Bridge':
     with user:
         st.markdown("YOU", unsafe_allow_html=True)
 
+        #st.video(video_trainer_file, format="video/mp4", start_time=0)
         def dp(dist_mat):
             """
             Find minimum-cost path through matrix `dist_mat` using dynamic programming.
@@ -174,12 +178,12 @@ elif app_mode =='Glute Bridge':
             cost_mat = cost_mat[1:, 1:]
             return (path[::-1], cost_mat)
 
-        def calcular_costos(ej_usuario, df_planchas_experto1, inicio, fin):
+        def calcular_costos(ej_usuario, df_planchas_experto1, inicio, fin, df_costos):
     
             #inicio=0
             #fin = 1
             
-            resultados = []
+            resultados_costos = []
             resultados_index = []
             resultados_costo_al = []
             resultados_costo_al_normalizado = []
@@ -187,11 +191,14 @@ elif app_mode =='Glute Bridge':
             #while (inicio <= len(df_planchas_experto1)-1 and fin <= len(df_planchas_experto1)):
                 #print()
             ej_experto = []
-            #st.table(df_experto[inicio:fin][0][inicio])
-            for i in range(0,len(df_planchas_experto1.columns)):
+            #st.markdown(df_experto["nose_x"][0], unsafe_allow_html=True)
+
+            for i in df_planchas_experto1.columns:
+
+            #for i in range(0,len(df_planchas_experto1.columns)):
 
                 print(inicio)
-                ej_experto = ej_experto + df_experto[inicio:fin][0][inicio]
+                ej_experto.append(df_experto[i][inicio])
 
 
             x = np.array(ej_usuario) 
@@ -230,15 +237,17 @@ elif app_mode =='Glute Bridge':
             resultados_index.append(inicio)
             resultados_costo_al.append(cost_mat[N - 1, M - 1])
             resultados_costo_al_normalizado.append(cost_mat[N - 1, M - 1]/(N + M))
-            resultados.append([inicio,cost_mat[N - 1, M - 1],cost_mat[N - 1, M - 1]/(N + M)])
+            resultados_costos.append([inicio,cost_mat[N - 1, M - 1],cost_mat[N - 1, M - 1]/(N + M)])
             inicio=inicio+1
             fin = fin+1
-            return resultados
+            #st.text(type(resultados_costos))
+
+            return resultados_costos
 
 
 
         if webcam:
-            #stframe = st.empty()
+            stframe = st.empty()
             #vid = cv2.VideoCapture(0)
 
             #width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -294,118 +303,206 @@ elif app_mode =='Glute Bridge':
             mp_pose = mp.solutions.pose
             start = time.time()
             #"the code you want to test stays here"
-
+            #st.video(vid, format="video/mp4", start_time=0)
             c=0
             val = 0
             with mp_pose.Pose(static_image_mode=False) as pose:
 
-                while True:
-                    ret, frame = vid.read()
+                try:
 
-                    if ret == False:
-                        break
+                    while True:
+                        ret, frame = vid.read()
 
-                    frame = cv2.flip(frame,1)
-                    height, width, _ = frame.shape
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    results = pose.process(frame_rgb)
-                    #print("Pose landmarks: ", results.pose_landmarks)
-                    
-                    if c % 15 == 0:
-                    
-                        resultados = []
+                        if ret == False:
+                            break
 
-                        for i in range(0, len(results.pose_landmarks.landmark)):
-                            #time.sleep(1)
-                            resultados.append(results.pose_landmarks.landmark[i].x)
-                            resultados.append(results.pose_landmarks.landmark[i].y)
-                            resultados.append(results.pose_landmarks.landmark[i].z)
-                            resultados.append(results.pose_landmarks.landmark[i].visibility)
-
-                        df_puntos = pd.DataFrame(np.reshape(resultados, (132, 1)).T)
-                        df_puntos['segundo'] = str(c/15)
-                        #print("Dataframe: ", df_puntos)
-                        if c==0:
-                            df_puntos_final = df_puntos.copy()
-                        else:
-                            #print(type(df_puntos_final))
-                            #print(type(df_puntos))
-                            df_puntos_final = pd.concat([df_puntos_final, df_puntos])
+                        frame = cv2.flip(frame,1)
+                        height, width, _ = frame.shape
+                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        results = pose.process(frame_rgb)
+                        #print("Pose landmarks: ", results.pose_landmarks)
                         
-                        ej_usuario = resultados
+                        if c % 15 == 0: #Procesa 15 frames por segundo
                         
-                        if val == 0:
-                            
-                            inicio=0
-                            fin = 1
-                            print("Intentando el segundo cero")
-                            resultados_costos = calcular_costos(ej_usuario,df_experto,inicio,fin)
-                        
-                            if (resultados_costos[0][1]<= df_costos.Costo_alineamiento[inicio]-df_costos.Desviacion_estandar[inicio] or resultados_costos[0][1]<= df_costos.Costo_alineamiento[inicio]+df_costos.Desviacion_estandar[inicio]) and val==0: # promedio +- desviación estandar (para evitar casos rápidos o lentos)
-                            
-                                val = 1
-                                print("Costo desde: ", str(df_costos.Costo_alineamiento[inicio]-df_costos.Desviacion_estandar[inicio]))
-                                print("Costo hasta: ", str(df_costos.Costo_alineamiento[inicio]+df_costos.Desviacion_estandar[inicio]))
-                                print("Costo resultante: ", str(resultados_costos[0][1]))
-                                print("Se realizó la pose del segundo cero")
-                                
-                            inicio = inicio+1
-                            fin = fin+1    
-                        else:
-                            # SE VA A COMPARAR LOS COSTOS DE ALINEAMIENTO POR SEGUNDO EXACTO DEL USUARIO CON RESPECTO AL EXPERTO
-                            
-                            #inicio=1
-                            #fin = 2
-                            print("Intentando el segundo", str(inicio))
-                            resultados_costos = calcular_costos(ej_usuario,df_experto,inicio,fin)
-                            
-                            if (resultados_costos[0][1]>= df_costos.Costo_alineamiento[inicio]-df_costos.Desviacion_estandar[inicio] and resultados_costos[0][1]<= df_costos.Costo_alineamiento[inicio]+df_costos.Desviacion_estandar[inicio]):
-                                print("Costo desde: ", str(df_costos.Costo_alineamiento[inicio]-df_costos.Desviacion_estandar[inicio]))
-                                print("Costo hasta: ", str(df_costos.Costo_alineamiento[inicio]+df_costos.Desviacion_estandar[inicio]))
-                                print("Costo resultante: ", str(resultados_costos[0][1]))
-                                print("Se realizó la pose del segundo correspondiente")
+                            resultados = []
+
+                            for i in range(0, len(results.pose_landmarks.landmark)):
+                                #time.sleep(1)
+                                resultados.append(results.pose_landmarks.landmark[i].x)
+                                resultados.append(results.pose_landmarks.landmark[i].y)
+                                resultados.append(results.pose_landmarks.landmark[i].z)
+                                resultados.append(results.pose_landmarks.landmark[i].visibility)
+
+                            df_puntos = pd.DataFrame(np.reshape(resultados, (132, 1)).T)
+                            df_puntos['segundo'] = str(c/15)
+                            #print("Dataframe: ", df_puntos)
+                            if c==0:
+                                df_puntos_final = df_puntos.copy()
                             else:
-                                print("Costo desde: ", str(df_costos.Costo_alineamiento[inicio]-df_costos.Desviacion_estandar[inicio]))
-                                print("Costo hasta: ", str(df_costos.Costo_alineamiento[inicio]+df_costos.Desviacion_estandar[inicio]))
-                                print("Costo resultante: ", str(resultados_costos[0][1]))
-                                print("No se realizó el ejercicio correctamente!!!!!")
+                                #print(type(df_puntos_final))
+                                #print(type(df_puntos))
+                                df_puntos_final = pd.concat([df_puntos_final, df_puntos])
                             
-                            inicio = inicio+1
-                            fin = fin+1  
+                            ej_usuario = resultados
                             
-                            if inicio == len(df_experto):
+                            if val == 0:
                                 
                                 inicio=0
                                 fin = 1
-                                val=0
-                        c = c+1
-                    else:
-                        #print("")
+                                st.text("Intentando el segundo cero")
+                                resultados_costos = calcular_costos(ej_usuario,df_experto,inicio,fin, df_costos)
+                                #st.text(type(resultados_costos))
+                                #st.text(val)
+                                if (resultados_costos[0][1]<= df_costos.Costo_alineamiento[inicio]-df_costos.Desviacion_estandar[inicio] or resultados_costos[0][1]<= df_costos.Costo_alineamiento[inicio]+df_costos.Desviacion_estandar[inicio]) and val==0: # promedio +- desviación estandar (para evitar casos rápidos o lentos)
+                                
+                                    val = 1
 
-                        if results.pose_landmarks is not None:
+                                    costo_desde = "Costo desde: ", str(df_costos.Costo_alineamiento[inicio]-df_costos.Desviacion_estandar[inicio])
+                                    costo_hasta= "Costo hasta: ", str(df_costos.Costo_alineamiento[inicio]+df_costos.Desviacion_estandar[inicio])
+                                    costo_resultante = "Costo resultante: ", str(resultados_costos[0][1])
+                                    st.text(costo_desde)
+                                    st.text(costo_hasta)
+                                    st.text(costo_resultante)
+                                    #st.text("Se realizó la pose del segundo cero")
+                                    st.components.v1.html(f"""<span style="color:blue">Se realizó la pose del segundo cero</span>""")
 
-                            mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
-                                                mp_drawing.DrawingSpec(color=(128,0,250), thickness=2, circle_radius=3),
-                                                mp_drawing.DrawingSpec(color=(255,255,255), thickness=2))
-                        titulo_windows = "Prueba de ejercicios" 
-                        cv2.imshow(titulo_windows,frame)
+                                    #st.text(costo_desde)
+                                    #st.text(costo_hasta)
+                                    #st.text(costo_resultante)
+                                    #st.text("Se realizó la pose del segundo correspondiente")
 
-                        #if cv2.waitKey(1) == ord('q'):
-                        #   break
+                                    
+                                    #stframe.image(frame,channels = 'BGR',use_column_width=True)
+                                    inicio = inicio+1
+                                    fin = fin+1   
+                                else:
+                                    costo_desde = "Costo desde: ", str(df_costos.Costo_alineamiento[inicio]-df_costos.Desviacion_estandar[inicio])
+                                    costo_hasta= "Costo hasta: ", str(df_costos.Costo_alineamiento[inicio]+df_costos.Desviacion_estandar[inicio])
+                                    costo_resultante = "Costo resultante: ", str(resultados_costos[0][1])
+                                    if resultados_costos[0][1] <=30:
+                                        st.text(costo_desde)
+                                        st.text(costo_hasta)
+                                        st.text(costo_resultante)
+                                        st.components.v1.html(f"""<span style="color:red">No se realizó el ejercicio correctamente!!!!!</span>""")
 
-                        #if (cv2.waitKey(1) | 0xFF == 27) | cv2.waitKey(10) & 0xFF == ord('q'):
-                            #break
+                                    if results.pose_landmarks is not None:
 
-                        #if cv2.waitKey(10) & 0xFF == ord('q'):
-                        #   break
+                                        mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
+                                                            mp_drawing.DrawingSpec(color=(128,0,250), thickness=2, circle_radius=3),
+                                                            mp_drawing.DrawingSpec(color=(255,255,255), thickness=2))
 
-                        if cv2.waitKey(1) & 0xFF == 27:
-                            break
-                        c = c+1
+                                    cv2.rectangle(frame, (0,0), (225,73), (245,117,16), -1)
+                        
+                                    # Rep data-testid
+                                    cv2.putText(frame, #frame 
+                                                'Validacion', #mensaje 
+                                                (15,12), #posicion
+                                                cv2.FONT_HERSHEY_SIMPLEX, #fuente 
+                                                0.5, #opacidad 
+                                                (0,0,0), #Color RGB
+                                                1, # 
+                                                cv2.LINE_AA) #
+                                    cv2.putText(frame, str("No se realizó el ejercicio correctamente!!!!!"), 
+                                            (10,60), 
+                                            cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2, cv2.LINE_AA)
+                                    stframe.image(frame,channels = 'BGR',use_column_width=True)
+ 
+                            else:
+                                # SE VA A COMPARAR LOS COSTOS DE ALINEAMIENTO POR SEGUNDO EXACTO DEL USUARIO CON RESPECTO AL EXPERTO
+                                
+                                #inicio=1
+                                #fin = 2
+                                print("Intentando el segundo", str(inicio))
+                                resultados_costos = calcular_costos(ej_usuario,df_experto,inicio,fin, df_costos)
+                                
+                                if (resultados_costos[0][1]>= df_costos.Costo_alineamiento[inicio]-df_costos.Desviacion_estandar[inicio] and resultados_costos[0][1]<= df_costos.Costo_alineamiento[inicio]+df_costos.Desviacion_estandar[inicio]):
+                                    
+                                    costo_desde = "Costo desde: ", str(df_costos.Costo_alineamiento[inicio]-df_costos.Desviacion_estandar[inicio])
+                                    costo_hasta= "Costo hasta: ", str(df_costos.Costo_alineamiento[inicio]+df_costos.Desviacion_estandar[inicio])
+                                    costo_resultante = "Costo resultante: ", str(resultados_costos[0][1])
+                                    st.text(costo_desde)
+                                    st.text(costo_hasta)
+                                    st.text(costo_resultante)
+                                    st.components.v1.html(f"""<span style="color:blue">Se realizó la pose del segundo correspondiente</span>""")
 
-                    #key = cv2.waitKey(25)
-                    #if key == ord('n') or key == ord('p') or key == ord('q'):
-                    #    break
+                                    #print("Costo desde: ", str(df_costos.Costo_alineamiento[inicio]-df_costos.Desviacion_estandar[inicio]))
+                                    #print("Costo hasta: ", str(df_costos.Costo_alineamiento[inicio]+df_costos.Desviacion_estandar[inicio]))
+                                    #print("Costo resultante: ", str(resultados_costos[0][1]))
+                                    #print("Se realizó la pose del segundo correspondiente")
+                                else:
+
+                                    costo_desde = "Costo desde: ", str(df_costos.Costo_alineamiento[inicio]-df_costos.Desviacion_estandar[inicio])
+                                    costo_hasta= "Costo hasta: ", str(df_costos.Costo_alineamiento[inicio]+df_costos.Desviacion_estandar[inicio])
+                                    costo_resultante = "Costo resultante: ", str(resultados_costos[0][1])
+                                    st.text(costo_desde)
+                                    st.text(costo_hasta)
+                                    st.text(costo_resultante)
+                                    st.components.v1.html(f"""<span style="color:red">No se realizó el ejercicio correctamente!!!!!</span>""")
+                                    #st.text("No se realizó el ejercicio correctamente!!!!!")
+
+                                    #print("Costo desde: ", str(df_costos.Costo_alineamiento[inicio]-df_costos.Desviacion_estandar[inicio]))
+                                    #print("Costo hasta: ", str(df_costos.Costo_alineamiento[inicio]+df_costos.Desviacion_estandar[inicio]))
+                                    #print("Costo resultante: ", str(resultados_costos[0][1]))
+                                    #print("No se realizó el ejercicio correctamente!!!!!")
+                                
+                                inicio = inicio+1
+                                fin = fin+1  
+                                
+                                if inicio == len(df_experto):
+                                    
+                                    inicio=0
+                                    fin = 1
+                                    val=0
+                            c = c+1
+                        else:
+                            #print("")
+
+                            if results.pose_landmarks is not None:
+
+                                mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
+                                                    mp_drawing.DrawingSpec(color=(128,0,250), thickness=2, circle_radius=3),
+                                                    mp_drawing.DrawingSpec(color=(255,255,255), thickness=2))
+                            titulo_windows = "Prueba de ejercicios" 
+                            #cv2.imshow(titulo_windows,frame)
+
+                            #cv2.rectangle(frame, (0,0), (225,73), (245,117,16), -1)
+                        
+                            # Rep data
+                            #cv2.putText(frame, #frame 
+                            #            'REPS', #mensaje 
+                            #            (15,12), #posicion
+                            #            cv2.FONT_HERSHEY_SIMPLEX, #fuente 
+                            #            0.5, #opacidad 
+                            #            (0,0,0), #Color RGB
+                            #            1, # 
+                            #            cv2.LINE_AA) #
+                            #cv2.putText(frame, str("Prueba"), 
+                            #        (10,60), 
+                            #        cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2, cv2.LINE_AA)
+
+                            #stframe.image(frame,channels = 'BGR',use_column_width=True)
+                            
+                            #if cv2.waitKey(1) == ord('q'):
+                            #   break
+
+                            #if (cv2.waitKey(1) | 0xFF == 27) | cv2.waitKey(10) & 0xFF == ord('q'):
+                                #break
+
+                            #if cv2.waitKey(10) & 0xFF == ord('q'):
+                            #   break
+
+                            if cv2.waitKey(1) & 0xFF == 27:
+                                break
+                            c = c+1
+
+                        #key = cv2.waitKey(25)
+                        #if key == ord('n') or key == ord('p') or key == ord('q'):
+                        #    break
+
+                except Exception as e:
+                    st.text(f"{type(e).__name__} at line {e.__traceback__.tb_lineno} of {__file__}: {e}")
+                    st.text(e)
+                    st.text("Porfavor active su webcam correctamente.")
 
             vid.release()
             cv2.destroyAllWindows()
